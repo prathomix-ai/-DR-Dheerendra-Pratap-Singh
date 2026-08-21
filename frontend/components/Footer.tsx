@@ -14,24 +14,26 @@ export default function Footer() {
                 <Activity size={22} className="text-white" />
               </div>
               <div>
-                <div className="font-display font-800 text-xl text-white">Prathomix</div>
-                <div className="font-mono text-[11px] text-teal-400 tracking-widest uppercase">AI Physiotherapy</div>
+                <div className="font-display font-800 text-lg text-white">Dr. Dheerendra</div>
+                <div className="font-mono text-[11px] text-teal-400 tracking-widest uppercase">PhysioCare</div>
               </div>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed max-w-xs font-body">
-              Revolutionizing physiotherapy with empathetic AI, real-time pose correction, and multi-language support across India.
+              Empowering digital rehabilitation with real-time pose tracking, intelligent symptom triage, and personalized physical therapy care.
             </p>
             <div className="mt-4 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10">
               <div className="flex items-start gap-2">
                 <AlertTriangle size={14} className="text-amber-400 mt-0.5 shrink-0" />
                 <p className="font-mono text-[10px] text-amber-300 leading-snug">
-                  DISCLAIMER: Prathomix AI holds ZERO legal or medical liability. This is an AI-assistive tool. Users assume 100% risk.
+                  DISCLAIMER: PhysioCare is an AI-assistive tool for guided exercise and triage. Consult Dr. Dheerendra Pratap Singh for medical diagnosis.
                 </p>
               </div>
             </div>
             <div className="mt-3 flex items-center gap-2">
               <Zap size={13} className="text-teal-500" />
-              <span className="font-mono text-xs text-teal-400 font-600 tracking-wider uppercase">Powered by Prathomix</span>
+              <a href="https://prathomix.tech" target="_blank" rel="noreferrer" className="font-mono text-xs text-teal-400 font-600 tracking-wider uppercase hover:underline">
+                POWERED BY PRATHOMIX (prathomix.tech)
+              </a>
             </div>
           </div>
           <div>
@@ -53,7 +55,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-12 pt-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-3">
-          <p className="text-slate-500 text-xs font-body">© 2026 Dr. Dheerendra Pratap Singh. Powered by Prathomix AI.</p>
+          <p className="text-slate-500 text-xs font-body">© 2026 Dr. Dheerendra Pratap Singh. Powered by PRATHOMIX (prathomix.tech).</p>
           <div className="flex items-center gap-1.5">
             <Heart size={12} className="text-red-500" />
             <span className="text-slate-500 text-xs font-body">Built with care for India&apos;s health</span>

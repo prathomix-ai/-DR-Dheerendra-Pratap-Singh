@@ -5,15 +5,16 @@ import { Toaster } from 'react-hot-toast'
 export const metadata: Metadata = {
   metadataBase: new URL('https://prathomix.tech'),
   title: {
-    default: 'Dr. Dheerendra Pratap Singh · AI Physiotherapy & Rehab (Created by PRATHOMIX)',
-    template: '%s | Dr. Dheerendra Pratap Singh AI Physio (Created by PRATHOMIX)',
+    default: 'Dr. Dheerendra PhysioCare · Dr. Dheerendra Pratap Singh (Powered by PRATHOMIX)',
+    template: '%s | Dr. Dheerendra PhysioCare',
   },
-  description: 'Official AI Physiotherapy & Rehabilitation platform for Dr. Dheerendra Pratap Singh. Created by PRATHOMIX (https://prathomix.tech). Instant AI symptom triage, real-time computer vision pose correction, and 1-click video consultations.',
+  description: 'Official PhysioCare platform for Dr. Dheerendra Pratap Singh. Software powered by PRATHOMIX (https://prathomix.tech). Instant AI symptom triage, real-time computer vision pose correction, and 1-click video consultations.',
   keywords: [
     'Dr Dheerendra Pratap Singh',
+    'Dr Dheerendra PhysioCare',
     'Dr Dheerendra Pratap Singh Physiotherapist',
     'PRATHOMIX',
-    'Created by PRATHOMIX',
+    'Powered by PRATHOMIX',
     'prathomix.tech',
     'Physiotherapy online',
     'AI Physiotherapy',
@@ -36,17 +37,17 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: 'Dr. Dheerendra Pratap Singh · AI Physiotherapy & Rehabilitation',
-    description: 'Official Rehabilitation Software for Dr. Dheerendra Pratap Singh, created by PRATHOMIX (https://prathomix.tech). Instant pain triage, posture analysis & video consults.',
+    title: 'Dr. Dheerendra PhysioCare · Dr. Dheerendra Pratap Singh',
+    description: 'Official Rehabilitation Software for Dr. Dheerendra Pratap Singh, powered by PRATHOMIX (https://prathomix.tech). Instant pain triage, posture analysis & video consults.',
     url: 'https://prathomix.tech',
-    siteName: 'Dr. Dheerendra Pratap Singh AI Physio Care',
+    siteName: 'Dr. Dheerendra PhysioCare Clinic',
     locale: 'en_IN',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Dr. Dheerendra Pratap Singh · AI Physiotherapy (Created by PRATHOMIX)',
-    description: 'AI-Powered Physiotherapy Platform for Dr. Dheerendra Pratap Singh — Created by PRATHOMIX (https://prathomix.tech).',
+    title: 'Dr. Dheerendra PhysioCare (Powered by PRATHOMIX)',
+    description: 'AI-Powered Physiotherapy Platform for Dr. Dheerendra Pratap Singh — Powered by PRATHOMIX (https://prathomix.tech).',
     creator: '@prathomix',
   },
   robots: {
@@ -65,8 +66,8 @@ export const metadata: Metadata = {
 const jsonLdSchema = {
   '@context': 'https://schema.org',
   '@type': 'MedicalClinic',
-  name: 'Dr. Dheerendra Pratap Singh Physiotherapy Clinic',
-  description: 'Official AI-assisted physiotherapy practice directed by Dr. Dheerendra Pratap Singh. Software created by PRATHOMIX.',
+  name: 'Dr. Dheerendra Pratap Singh PhysioCare Clinic',
+  description: 'Official AI-assisted physiotherapy practice directed by Dr. Dheerendra Pratap Singh. Software created by PRATHOMIX (https://prathomix.tech).',
   url: 'https://prathomix.tech',
   telephone: '+919999999999',
   address: {

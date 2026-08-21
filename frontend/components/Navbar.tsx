@@ -127,9 +127,8 @@ export default function Navbar({ lang, setLang }: Props) {
           <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center text-white shadow-sm">
             <Activity size={15} />
           </div>
-          <span className="font-display font-800 text-base text-slate-900 tracking-tight">Prathomix</span>
+          <span className="font-display font-800 text-sm text-slate-900 tracking-tight">Dr. Dheerendra PhysioCare</span>
         </Link>
-
         {/* Right Side: Language & Profile Option */}
         <div className="flex items-center gap-2">
           <button
@@ -167,8 +166,8 @@ export default function Navbar({ lang, setLang }: Props) {
               <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-400 border-2 border-white animate-pulse" />
             </div>
             <div>
-              <span className="font-display font-800 text-lg text-slate-900 tracking-tight">Prathomix</span>
-              <div className="text-[10px] font-mono text-teal-600 font-500 -mt-0.5 tracking-widest uppercase leading-none">AI Physio</div>
+              <span className="font-display font-800 text-base text-slate-900 tracking-tight">Dr. Dheerendra</span>
+              <div className="text-[10px] font-mono text-teal-600 font-600 -mt-0.5 tracking-wider uppercase leading-none">PhysioCare</div>
             </div>
           </Link>
 
