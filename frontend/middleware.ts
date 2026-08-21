@@ -26,6 +26,13 @@ export async function middleware(request: NextRequest) {
 
   const response = NextResponse.next({ request: { headers: request.headers } })
 
+  // Global Security Firewall Headers Injection
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-XSS-Protection', '1; mode=block')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
+
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     if (isAdminLogin) {
       return response
