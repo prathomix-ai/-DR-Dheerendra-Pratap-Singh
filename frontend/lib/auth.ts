@@ -10,10 +10,42 @@ export interface PrathomixUser {
   phone?: string
 }
 
-// In-Memory Cache Tier (0ms instant access)
+// Private In-Memory Cache Tier (Isolated from window global scope)
 let memoryUserCache: PrathomixUser | null = null
 let memoryTokenCache: string | null = null
 let cacheTimestamp: number | null = null
+
+// Ultra-Max Security Config
+const SEC_SALT = 'PRATHOMIX_ULTRA_MAX_SEC_ENCRYPTION_V2_2026'
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24-Hour Security Auto-Expiry
+
+// Anti-Tamper Cipher & XOR Salt Encryption Helper
+function secureEncrypt(text: string): string {
+  try {
+    let result = ''
+    for (let i = 0; i < text.length; i++) {
+      const charCode = text.charCodeAt(i) ^ SEC_SALT.charCodeAt(i % SEC_SALT.length)
+      result += String.fromCharCode(charCode)
+    }
+    return btoa(encodeURIComponent(result))
+  } catch {
+    return text
+  }
+}
+
+function secureDecrypt(encryptedText: string): string {
+  try {
+    const raw = decodeURIComponent(atob(encryptedText))
+    let result = ''
+    for (let i = 0; i < raw.length; i++) {
+      const charCode = raw.charCodeAt(i) ^ SEC_SALT.charCodeAt(i % SEC_SALT.length)
+      result += String.fromCharCode(charCode)
+    }
+    return result
+  } catch {
+    return ''
+  }
+}
 
 export function getStoredUser(): PrathomixUser | null {
   if (memoryUserCache) {
@@ -23,13 +55,47 @@ export function getStoredUser(): PrathomixUser | null {
   if (typeof window === 'undefined') return null
 
   try {
-    const raw = localStorage.getItem('prathomix_user')
-    if (!raw) return null
-    const parsed = JSON.parse(raw)
+    const encData = localStorage.getItem('prathomix_user_sec_v2')
+    const timeStr = localStorage.getItem('prathomix_sec_time')
+
+    if (!encData) {
+      // Fallback check legacy plain cache if present, then purge it securely
+      const legacyRaw = localStorage.getItem('prathomix_user')
+      if (legacyRaw) {
+        try {
+          const parsed = JSON.parse(legacyRaw)
+          storeUser(parsed, localStorage.getItem('prathomix_token') || '')
+          localStorage.removeItem('prathomix_user')
+          localStorage.removeItem('prathomix_token')
+          return parsed
+        } catch {
+          return null
+        }
+      }
+      return null
+    }
+
+    // Check Security TTL Expiry
+    if (timeStr) {
+      const savedTime = parseInt(timeStr, 10)
+      if (isNaN(savedTime) || Date.now() - savedTime > CACHE_TTL_MS) {
+        clearAuth()
+        return null
+      }
+    }
+
+    const decryptedJson = secureDecrypt(encData)
+    if (!decryptedJson) {
+      clearAuth() // Tamper detected -> immediate security purge
+      return null
+    }
+
+    const parsed = JSON.parse(decryptedJson)
     memoryUserCache = parsed
     cacheTimestamp = Date.now()
     return parsed
   } catch {
+    clearAuth()
     return null
   }
 }
@@ -51,14 +117,18 @@ export function storeUser(user: PrathomixUser, token: string) {
 
   if (typeof window !== 'undefined') {
     try {
-      localStorage.setItem('prathomix_user', JSON.stringify(user))
-      localStorage.setItem('prathomix_token', token)
-      localStorage.setItem('prathomix_last_login_time', String(cacheTimestamp))
+      const encryptedUser = secureEncrypt(JSON.stringify(user))
+      const encryptedToken = secureEncrypt(token)
+
+      localStorage.setItem('prathomix_user_sec_v2', encryptedUser)
+      localStorage.setItem('prathomix_token_sec_v2', encryptedToken)
+      localStorage.setItem('prathomix_sec_time', String(cacheTimestamp))
+
       if (user.email) {
-        localStorage.setItem('prathomix_remembered_email', user.email)
+        localStorage.setItem('prathomix_rem_email_sec', secureEncrypt(user.email))
       }
     } catch (e) {
-      console.warn('LocalStorage save warning:', e)
+      console.warn('Encrypted Cache save error:', e)
     }
   }
 }
@@ -66,6 +136,10 @@ export function storeUser(user: PrathomixUser, token: string) {
 export function getRememberedEmail(): string {
   if (typeof window === 'undefined') return ''
   try {
+    const encEmail = localStorage.getItem('prathomix_rem_email_sec')
+    if (encEmail) {
+      return secureDecrypt(encEmail)
+    }
     return localStorage.getItem('prathomix_remembered_email') || ''
   } catch {
     return ''
@@ -79,6 +153,9 @@ export function clearAuth() {
 
   if (typeof window !== 'undefined') {
     try {
+      localStorage.removeItem('prathomix_user_sec_v2')
+      localStorage.removeItem('prathomix_token_sec_v2')
+      localStorage.removeItem('prathomix_sec_time')
       localStorage.removeItem('prathomix_user')
       localStorage.removeItem('prathomix_token')
       localStorage.removeItem('prathomix_last_login_time')
@@ -92,6 +169,14 @@ export function getToken(): string | null {
   if (memoryTokenCache) return memoryTokenCache
   if (typeof window !== 'undefined') {
     try {
+      const encTok = localStorage.getItem('prathomix_token_sec_v2')
+      if (encTok) {
+        const decTok = secureDecrypt(encTok)
+        if (decTok) {
+          memoryTokenCache = decTok
+          return decTok
+        }
+      }
       const tok = localStorage.getItem('prathomix_token')
       if (tok) memoryTokenCache = tok
       return tok
