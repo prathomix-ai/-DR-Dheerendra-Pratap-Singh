@@ -7,7 +7,7 @@ import { motion } from 'framer-motion'
 import { ArrowRight, CheckCircle2, Eye, EyeOff, HeartPulse, Loader2, Mail, UserRound, Lock } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase, getSupabaseDisplayName } from '@/lib/supabase'
-import { storeUser } from '@/lib/auth'
+import { storeUser, getRememberedEmail, getStoredUser } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,15 +16,6 @@ type Mode = 'login' | 'signup'
 export default function LoginPage() {
   const router = useRouter()
   const [nextPath, setNextPath] = useState('/dashboard')
-
-  useEffect(() => {
-    try {
-      const params = new URLSearchParams(window.location.search)
-      setNextPath(params.get('next') || '/dashboard')
-    } catch {
-      setNextPath('/dashboard')
-    }
-  }, [])
   const [mode, setMode] = useState<Mode>('login')
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -34,10 +25,30 @@ export default function LoginPage() {
   const [connectionError, setConnectionError] = useState('')
 
   useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search)
+      setNextPath(params.get('next') || '/dashboard')
+    } catch {
+      setNextPath('/dashboard')
+    }
+
+    // Restore remembered email from login cache memory
+    const savedEmail = getRememberedEmail()
+    if (savedEmail) {
+      setEmail(savedEmail)
+    }
+
+    // Instant memory cache check for zero latency auto-redirect
+    const cachedUser = getStoredUser()
+    if (cachedUser?.id) {
+      router.push(nextPath)
+      return
+    }
+
     supabase.auth.getSession()
       .then(({ data }) => {
         if (data.session) {
-          router.push('/dashboard')
+          router.push(nextPath)
         }
       })
       .catch(() => {

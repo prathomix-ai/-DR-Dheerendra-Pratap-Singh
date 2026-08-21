@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { ArrowRight, Eye, EyeOff, Loader2, Lock, ShieldCheck, AlertTriangle, KeyRound, Mail, CheckCircle2, ShieldAlert } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
 import toast from 'react-hot-toast'
-import { clearAuth } from '@/lib/auth'
+import { clearAuth, storeUser } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -123,8 +123,20 @@ export default function AdminLoginPage() {
         return
       }
 
-      // Reset security metrics on successful authentication
+      // Reset security metrics & cache admin session on successful authentication
       setAttempts(0)
+      if (user && data.session) {
+        storeUser(
+          {
+            id: user.id,
+            email: user.email || '',
+            name: 'Dr. Dheerendra (Admin)',
+            role: 'admin',
+            language: 'en',
+          },
+          data.session.access_token
+        )
+      }
       toast.success('Ultra Security Verified · Welcome Admin')
       router.refresh()
       window.location.href = '/admin/dashboard'

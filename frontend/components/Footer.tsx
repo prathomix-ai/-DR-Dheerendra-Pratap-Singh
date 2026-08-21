@@ -32,7 +32,7 @@ export default function Footer() {
             <div className="mt-3 flex items-center gap-2">
               <Zap size={13} className="text-teal-500" />
               <a href="https://prathomix.tech" target="_blank" rel="noreferrer" className="font-mono text-xs text-teal-400 font-600 tracking-wider uppercase hover:underline">
-                POWERED BY PRATHOMIX (prathomix.tech)
+                POWERED BY PRATHOMIX
               </a>
             </div>
           </div>
@@ -55,7 +55,9 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-12 pt-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-3">
-          <p className="text-slate-500 text-xs font-body">© 2026 Dr. Dheerendra Pratap Singh. Powered by PRATHOMIX (prathomix.tech).</p>
+          <p className="text-slate-500 text-xs font-body">
+            © 2026 Dr. Dheerendra Pratap Singh. <a href="https://prathomix.tech" target="_blank" rel="noreferrer" className="hover:text-teal-400 hover:underline">Powered by PRATHOMIX</a>.
+          </p>
           <div className="flex items-center gap-1.5">
             <Heart size={12} className="text-red-500" />
             <span className="text-slate-500 text-xs font-body">Built with care for India&apos;s health</span>
