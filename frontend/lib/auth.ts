@@ -16,15 +16,83 @@ let memoryTokenCache: string | null = null
 let cacheTimestamp: number | null = null
 
 // Ultra-Max Security Config
-const SEC_SALT = 'PRATHOMIX_ULTRA_MAX_SEC_ENCRYPTION_V2_2026'
+const SEC_SALT = 'PRATHOMIX_ULTRA_MAX_SEC_ENCRYPTION_V3_2026'
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24-Hour Security Auto-Expiry
 
-// Anti-Tamper Cipher & XOR Salt Encryption Helper
+// ==========================================
+// 🛡️ ATTACK DEFENDER SUITE
+// ==========================================
+
+// 1. XSS & Code Injection Shield
+export function defenderSanitize(input: string): string {
+  if (typeof input !== 'string') return ''
+  return input
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/javascript:/gi, '')
+    .replace(/data:text\/html/gi, '')
+    .replace(/onload\s*=/gi, '')
+    .replace(/onerror\s*=/gi, '')
+    .replace(/eval\s*\(/gi, '')
+    .replace(/document\.cookie/gi, '')
+}
+
+// 2. Hardware & Browser Environment Fingerprint Locking (Anti-Session Hijacking)
+function defenderGetFingerprint(): string {
+  if (typeof window === 'undefined') return 'ssr_env'
+  try {
+    const nav = window.navigator
+    const scr = window.screen
+    const raw = `${nav.userAgent}|${scr.width}x${scr.height}|${scr.colorDepth}|${nav.language}|${new Date().getTimezoneOffset()}`
+    let hash = 0
+    for (let i = 0; i < raw.length; i++) {
+      hash = (hash << 5) - hash + raw.charCodeAt(i)
+      hash |= 0
+    }
+    return `fp_${Math.abs(hash).toString(36)}`
+  } catch {
+    return 'fp_default'
+  }
+}
+
+// 3. HMAC Anti-Tamper Checksum Generator
+function defenderComputeHMAC(payload: string, timestamp: number): string {
+  const fp = defenderGetFingerprint()
+  const raw = `${payload}:${timestamp}:${fp}:${SEC_SALT}`
+  let hash = 5381
+  for (let i = 0; i < raw.length; i++) {
+    hash = (hash * 33) ^ raw.charCodeAt(i)
+  }
+  return (hash >>> 0).toString(16)
+}
+
+// 4. Rate-Limiting & Security Lockout Defender
+let failedAttempts = 0
+let lockoutUntil = 0
+
+function defenderCheckRateLimit(): boolean {
+  if (Date.now() < lockoutUntil) {
+    console.warn('🛡️ ATTACK DEFENDER: Security Lockout active due to anomalous activity.')
+    return false
+  }
+  return true
+}
+
+function defenderRecordFailure() {
+  failedAttempts++
+  if (failedAttempts >= 5) {
+    lockoutUntil = Date.now() + 30000 // 30-Second Lockout
+    failedAttempts = 0
+    console.error('🛡️ ATTACK DEFENDER: 5 Anomalous auth failures detected! Enforcing 30s Lockout.')
+  }
+}
+
+// 5. Anti-Tamper Cipher & XOR Salt Encryption Helper
 function secureEncrypt(text: string): string {
   try {
+    const cleanText = defenderSanitize(text)
     let result = ''
-    for (let i = 0; i < text.length; i++) {
-      const charCode = text.charCodeAt(i) ^ SEC_SALT.charCodeAt(i % SEC_SALT.length)
+    for (let i = 0; i < cleanText.length; i++) {
+      const charCode = cleanText.charCodeAt(i) ^ SEC_SALT.charCodeAt(i % SEC_SALT.length)
       result += String.fromCharCode(charCode)
     }
     return btoa(encodeURIComponent(result))
@@ -41,13 +109,20 @@ function secureDecrypt(encryptedText: string): string {
       const charCode = raw.charCodeAt(i) ^ SEC_SALT.charCodeAt(i % SEC_SALT.length)
       result += String.fromCharCode(charCode)
     }
-    return result
+    return defenderSanitize(result)
   } catch {
+    defenderRecordFailure()
     return ''
   }
 }
 
+// ==========================================
+// 🔐 SECURE AUTHENTICATION API
+// ==========================================
+
 export function getStoredUser(): PrathomixUser | null {
+  if (!defenderCheckRateLimit()) return null
+
   if (memoryUserCache) {
     return memoryUserCache
   }
@@ -55,23 +130,25 @@ export function getStoredUser(): PrathomixUser | null {
   if (typeof window === 'undefined') return null
 
   try {
-    const encData = localStorage.getItem('prathomix_user_sec_v2')
-    const timeStr = localStorage.getItem('prathomix_sec_time')
+    const encData = localStorage.getItem('prathomix_user_sec_v3')
+    const timeStr = localStorage.getItem('prathomix_sec_time_v3')
+    const sigStored = localStorage.getItem('prathomix_sec_sig_v3')
+    const fpStored = localStorage.getItem('prathomix_sec_fp_v3')
 
-    if (!encData) {
-      // Fallback check legacy plain cache if present, then purge it securely
-      const legacyRaw = localStorage.getItem('prathomix_user')
+    if (!encData || !sigStored) {
+      // Fallback check legacy cache if present, then purge it securely
+      const legacyRaw = localStorage.getItem('prathomix_user') || localStorage.getItem('prathomix_user_sec_v2')
       if (legacyRaw) {
-        try {
-          const parsed = JSON.parse(legacyRaw)
-          storeUser(parsed, localStorage.getItem('prathomix_token') || '')
-          localStorage.removeItem('prathomix_user')
-          localStorage.removeItem('prathomix_token')
-          return parsed
-        } catch {
-          return null
-        }
+        clearAuth()
       }
+      return null
+    }
+
+    // Anti-Session Hijacking: Verify Device Fingerprint match
+    const currentFp = defenderGetFingerprint()
+    if (fpStored && fpStored !== currentFp) {
+      console.error('🛡️ ATTACK DEFENDER: Device Fingerprint Mismatch! Session hijacking attempt blocked.')
+      clearAuth()
       return null
     }
 
@@ -82,15 +159,27 @@ export function getStoredUser(): PrathomixUser | null {
         clearAuth()
         return null
       }
+
+      // Anti-Tamper Checksum Verification
+      const expectedSig = defenderComputeHMAC(encData, savedTime)
+      if (sigStored !== expectedSig) {
+        console.error('🛡️ ATTACK DEFENDER: LocalStorage Tampering Detected! Purging corrupt session.')
+        clearAuth()
+        return null
+      }
     }
 
     const decryptedJson = secureDecrypt(encData)
     if (!decryptedJson) {
-      clearAuth() // Tamper detected -> immediate security purge
+      clearAuth()
       return null
     }
 
     const parsed = JSON.parse(decryptedJson)
+    // Sanitize user object against XSS
+    parsed.name = defenderSanitize(parsed.name || '')
+    parsed.email = defenderSanitize(parsed.email || '')
+
     memoryUserCache = parsed
     cacheTimestamp = Date.now()
     return parsed
@@ -101,31 +190,42 @@ export function getStoredUser(): PrathomixUser | null {
 }
 
 export function getDisplayName(user: PrathomixUser | null): string {
-  const name = user?.name?.trim()
+  const name = defenderSanitize(user?.name?.trim() || '')
   if (name) return name
 
-  const emailName = user?.email?.split('@')[0]?.trim()
+  const emailName = defenderSanitize(user?.email?.split('@')[0]?.trim() || '')
   if (emailName) return emailName
 
   return user?.role === 'admin' ? 'Admin' : 'Patient'
 }
 
 export function storeUser(user: PrathomixUser, token: string) {
-  memoryUserCache = user
+  // Sanitize before storing
+  const safeUser: PrathomixUser = {
+    ...user,
+    name: defenderSanitize(user.name || ''),
+    email: defenderSanitize(user.email || ''),
+  }
+
+  memoryUserCache = safeUser
   memoryTokenCache = token
   cacheTimestamp = Date.now()
 
   if (typeof window !== 'undefined') {
     try {
-      const encryptedUser = secureEncrypt(JSON.stringify(user))
+      const encryptedUser = secureEncrypt(JSON.stringify(safeUser))
       const encryptedToken = secureEncrypt(token)
+      const hmacSig = defenderComputeHMAC(encryptedUser, cacheTimestamp)
+      const currentFp = defenderGetFingerprint()
 
-      localStorage.setItem('prathomix_user_sec_v2', encryptedUser)
-      localStorage.setItem('prathomix_token_sec_v2', encryptedToken)
-      localStorage.setItem('prathomix_sec_time', String(cacheTimestamp))
+      localStorage.setItem('prathomix_user_sec_v3', encryptedUser)
+      localStorage.setItem('prathomix_token_sec_v3', encryptedToken)
+      localStorage.setItem('prathomix_sec_time_v3', String(cacheTimestamp))
+      localStorage.setItem('prathomix_sec_sig_v3', hmacSig)
+      localStorage.setItem('prathomix_sec_fp_v3', currentFp)
 
-      if (user.email) {
-        localStorage.setItem('prathomix_rem_email_sec', secureEncrypt(user.email))
+      if (safeUser.email) {
+        localStorage.setItem('prathomix_rem_email_sec', secureEncrypt(safeUser.email))
       }
     } catch (e) {
       console.warn('Encrypted Cache save error:', e)
@@ -138,9 +238,9 @@ export function getRememberedEmail(): string {
   try {
     const encEmail = localStorage.getItem('prathomix_rem_email_sec')
     if (encEmail) {
-      return secureDecrypt(encEmail)
+      return defenderSanitize(secureDecrypt(encEmail))
     }
-    return localStorage.getItem('prathomix_remembered_email') || ''
+    return defenderSanitize(localStorage.getItem('prathomix_remembered_email') || '')
   } catch {
     return ''
   }
@@ -153,9 +253,15 @@ export function clearAuth() {
 
   if (typeof window !== 'undefined') {
     try {
+      localStorage.removeItem('prathomix_user_sec_v3')
+      localStorage.removeItem('prathomix_token_sec_v3')
+      localStorage.removeItem('prathomix_sec_time_v3')
+      localStorage.removeItem('prathomix_sec_sig_v3')
+      localStorage.removeItem('prathomix_sec_fp_v3')
+
+      // Clean legacy keys
       localStorage.removeItem('prathomix_user_sec_v2')
       localStorage.removeItem('prathomix_token_sec_v2')
-      localStorage.removeItem('prathomix_sec_time')
       localStorage.removeItem('prathomix_user')
       localStorage.removeItem('prathomix_token')
       localStorage.removeItem('prathomix_last_login_time')
@@ -166,10 +272,12 @@ export function clearAuth() {
 }
 
 export function getToken(): string | null {
+  if (!defenderCheckRateLimit()) return null
   if (memoryTokenCache) return memoryTokenCache
+
   if (typeof window !== 'undefined') {
     try {
-      const encTok = localStorage.getItem('prathomix_token_sec_v2')
+      const encTok = localStorage.getItem('prathomix_token_sec_v3')
       if (encTok) {
         const decTok = secureDecrypt(encTok)
         if (decTok) {
@@ -177,12 +285,27 @@ export function getToken(): string | null {
           return decTok
         }
       }
-      const tok = localStorage.getItem('prathomix_token')
-      if (tok) memoryTokenCache = tok
-      return tok
+      return null
     } catch {
       return null
     }
   }
   return null
+}
+
+// 6. Cross-Tab Live Storage Defender (Real-time Tamper Protection)
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (
+      e.key === 'prathomix_user_sec_v3' ||
+      e.key === 'prathomix_token_sec_v3' ||
+      e.key === 'prathomix_sec_sig_v3'
+    ) {
+      console.warn('🛡️ ATTACK DEFENDER: External Storage Mutation Detected! Re-validating auth integrity...')
+      const user = getStoredUser()
+      if (!user) {
+        clearAuth()
+      }
+    }
+  })
 }
