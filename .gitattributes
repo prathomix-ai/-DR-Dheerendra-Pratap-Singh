@@ -1,0 +1,30 @@
+# Normalize line endings
+# Treat files as text and enforce LF for source files to avoid
+# CRLF/LF warnings across platforms.
+* text=auto
+
+# Force LF for source files
+*.js     eol=lf
+*.jsx    eol=lf
+*.ts     eol=lf
+*.tsx    eol=lf
+*.css    eol=lf
+*.scss   eol=lf
+*.html   eol=lf
+*.json   eol=lf
+*.md     eol=lf
+*.py     eol=lf
+*.sh     eol=lf
+
+# Keep Windows scripts with CRLF
+*.bat    eol=crlf
+*.ps1    eol=crlf
+
+# Binary files
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.zip    binary
+*.sqlite3 binary
